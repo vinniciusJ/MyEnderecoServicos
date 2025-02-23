@@ -21,18 +21,24 @@ public class BairroDAO {
     public Bairro obterBairroPorID(Long id) throws Exception {
         String sql = "SELECT * FROM bairro WHERE id = ?";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
+        Bairro bairro = null;
+
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
             stmt.setLong(1, id);
 
-            try(ResultSet resultSet = stmt.executeQuery()){
-                if(resultSet.next()){
-                    return new Bairro(id, resultSet.getString("nome"));
-                }
+            resultSet = stmt.executeQuery();
+
+            if(resultSet.next()){
+                bairro = criarBairroBO(resultSet);
             }
 
             conexao.commit();
@@ -42,30 +48,32 @@ public class BairroDAO {
         } catch (Exception e) {
             throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
         }
+        finally {
+            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        }
 
-        return null;
+        return bairro;
     }
 
     public List<Bairro> obterBairros() throws Exception{
         String sql = "SELECT * FROM bairro";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
         List<Bairro> bairros = new ArrayList<>();
 
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
-            try( ResultSet rs = stmt.executeQuery()){
-                while (rs.next()){
-                    long id = rs.getLong("id");
-                    String nome = rs.getString("nome");
+            resultSet = stmt.executeQuery();
 
-                    Bairro bairro = new Bairro(id, nome);
-
-                    bairros.add(bairro);
-                }
+            while (resultSet.next()){
+                bairros.add(criarBairroBO(resultSet));
             }
 
             conexao.commit();
@@ -77,5 +85,12 @@ public class BairroDAO {
         }
 
         return bairros;
+    }
+
+    private Bairro criarBairroBO(ResultSet resultSet) throws Exception {
+        long id = resultSet.getLong("id");
+        String nome = resultSet.getString("nome");
+
+        return new Bairro(id, nome);
     }
 }

@@ -24,18 +24,24 @@ public class LogradouroDAO {
     public Logradouro obterLogradouroPorId(Long id) throws Exception {
         String sql = "SELECT * FROM logradouro WHERE id = ?";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
+        Logradouro logradouro = new Logradouro();
+
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
             stmt.setLong(1, id);
 
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                if(resultSet.next()) {
-                    return criarLogradouroBO(resultSet);
-                }
+            resultSet = stmt.executeQuery();
+
+            if(resultSet.next()) {
+                logradouro = criarLogradouroBO(resultSet);
             }
 
             conexao.commit();;
@@ -45,28 +51,35 @@ public class LogradouroDAO {
         } catch (Exception e) {
             throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
         }
+        finally {
+            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        }
 
-        return null;
+        return logradouro;
     }
 
     public List<Logradouro> obterLogradouros() throws Exception {
         String sql = "SELECT * FROM logradouro";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
         List<Logradouro> logradouros = new ArrayList<Logradouro>();
 
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
-            try (ResultSet resultSet = stmt.executeQuery()) {
-                while(resultSet.next()) {
-                    logradouros.add(criarLogradouroBO(resultSet));
-                }
+            resultSet = stmt.executeQuery();
+
+            while(resultSet.next()) {
+                logradouros.add(criarLogradouroBO(resultSet));
             }
 
-            conexao.commit();;
+            conexao.commit();
         }
         catch(SQLException e){
             throw new EnderecoException("Não foi possível buscar todos os logradouros");

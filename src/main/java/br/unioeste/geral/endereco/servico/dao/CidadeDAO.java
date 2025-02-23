@@ -25,18 +25,24 @@ public class CidadeDAO {
     public Cidade obterCidadePorID(Long id) throws Exception {
         String sql = "SELECT * FROM cidade WHERE id = ?";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
+        Cidade cidade = null;
+
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
             stmt.setLong(1, id);
 
-            try(ResultSet resultSet = stmt.executeQuery()){
-                if(resultSet.next()){
-                    return criarCidadeBO(resultSet);
-                }
+            resultSet = stmt.executeQuery();
+
+            if(resultSet.next()){
+                return criarCidadeBO(resultSet);
             }
 
             conexao.commit();
@@ -46,25 +52,32 @@ public class CidadeDAO {
         } catch (Exception e) {
             throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
         }
+        finally {
+            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        }
 
-        return null;
+        return cidade;
     }
 
     public List<Cidade> obterCidades() throws Exception{
         String sql = "SELECT * FROM cidade";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
         List<Cidade> cidades = new ArrayList<>();
 
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
-            try(ResultSet resultSet = stmt.executeQuery()){
-                while (resultSet.next()){
-                    cidades.add(criarCidadeBO(resultSet));
-                }
+            resultSet = stmt.executeQuery();
+
+            while (resultSet.next()){
+                cidades.add(criarCidadeBO(resultSet));
             }
 
             conexao.commit();

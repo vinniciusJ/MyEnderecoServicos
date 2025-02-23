@@ -21,18 +21,24 @@ public class TipoLogradouroDAO {
     public TipoLogradouro obterTipoLogradouroPelaSigla(String sigla) throws Exception {
         String sql = "SELECT * FROM tipo_logradouro WHERE sigla = ?";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
+        TipoLogradouro tipoLogradouro = null;
+
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
             stmt.setString(1, sigla);
 
-            try(ResultSet resultSet = stmt.executeQuery()){
-                if(resultSet.next()){
-                    return criarTipoLogradouroBO(resultSet);
-                }
+            resultSet = stmt.executeQuery();
+
+            if(resultSet.next()){
+                tipoLogradouro = criarTipoLogradouroBO(resultSet);
             }
 
             conexao.commit();
@@ -42,6 +48,9 @@ public class TipoLogradouroDAO {
         } catch (Exception e) {
             throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
         }
+        finally {
+            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        }
 
         return null;
     }
@@ -49,18 +58,22 @@ public class TipoLogradouroDAO {
     public List<TipoLogradouro> obterTipoLogradouros() throws Exception{
         String sql = "SELECT * FROM tipo_logradouro";
 
+        Connection conexao = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
         List<TipoLogradouro> tipoLogradouros = new ArrayList<TipoLogradouro>();
 
         try{
-            Connection conexao = conexaoBD.getConexaoBD();
-            PreparedStatement stmt = conexao.prepareStatement(sql);
+            conexao = conexaoBD.getConexaoBD();
+            stmt = conexao.prepareStatement(sql);
 
             conexao.setAutoCommit(false);
 
-            try( ResultSet resultSet = stmt.executeQuery()){
-                while (resultSet.next()){
-                    tipoLogradouros.add(criarTipoLogradouroBO(resultSet));
-                }
+            resultSet = stmt.executeQuery();
+
+            while (resultSet.next()){
+                tipoLogradouros.add(criarTipoLogradouroBO(resultSet));
             }
 
             conexao.commit();
@@ -69,6 +82,9 @@ public class TipoLogradouroDAO {
             throw new EnderecoException("Não foi possível buscar todos os tipos de logradouro");
         } catch (Exception e) {
             throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
+        }
+        finally {
+            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
         }
 
         return tipoLogradouros;
