@@ -124,7 +124,7 @@ public class EnderecoDAO {
         long id = resultSet.getLong("id");
         String cep = resultSet.getString("cep");
 
-        long idBairro = resultSet.getLong("bairro");
+        long idBairro = resultSet.getLong("id_bairro");
         long idLogradouro = resultSet.getLong("id_logradouro");
         long idCidade = resultSet.getLong("id_cidade");
 
