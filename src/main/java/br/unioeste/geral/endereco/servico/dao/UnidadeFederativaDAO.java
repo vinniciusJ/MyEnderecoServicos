@@ -13,44 +13,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UnidadeFederativaDAO {
-    private final ConexaoBD conexaoBD;
+    private final Connection conexao;
 
-    public UnidadeFederativaDAO() {
-        conexaoBD = new ConexaoBD();
+    public UnidadeFederativaDAO(Connection conexao) {
+        this.conexao = conexao;
     }
 
     public UnidadeFederativa obterUnidadeFederativaPelaSigla(String sigla) throws Exception {
         String sql = "SELECT * FROM unidade_federativa WHERE sigla = ?";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         UnidadeFederativa unidadeFederativa = null;
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setString(1, sigla);
 
-            resultSet = stmt.executeQuery();
-
-            if(resultSet.next()){
-                unidadeFederativa = criarUnidadeFederativaBO(resultSet);
+            try(ResultSet resultSet = stmt.executeQuery()){
+                if (resultSet.next()){
+                    unidadeFederativa = criarUnidadeFederativaBO(resultSet);
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível encontrar o unidade federativa com a sigla: " + sigla);
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter a unidade federativa com sigla " + sigla);
         }
 
         return unidadeFederativa;
@@ -59,33 +43,17 @@ public class UnidadeFederativaDAO {
     public List<UnidadeFederativa> obterUnidadesFederativas() throws Exception{
         String sql = "SELECT * FROM unidade_federativa";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         List<UnidadeFederativa> unidadeFederativas = new ArrayList<>();
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
-            resultSet = stmt.executeQuery();
-
-            while (resultSet.next()){
-                unidadeFederativas.add(criarUnidadeFederativaBO(resultSet));
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    unidadeFederativas.add(criarUnidadeFederativaBO(resultSet));
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível buscar todas as unidades federativas");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter todos os tipos de logradouro");
         }
 
         return unidadeFederativas;

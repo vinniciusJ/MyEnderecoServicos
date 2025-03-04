@@ -2,14 +2,11 @@ package br.unioeste.geral.endereco.servico.col;
 
 import br.unioeste.geral.endereco.bo.cidade.Cidade;
 import br.unioeste.geral.endereco.bo.unidadefederativa.UnidadeFederativa;
-import br.unioeste.geral.endereco.servico.dao.CidadeDAO;
 
 public class CidadeCOL {
-    private final CidadeDAO cidadeDAO;
     private final UnidadeFederativaCOL unidadeFederativaCOL;
 
     public CidadeCOL() {
-        cidadeDAO = new CidadeDAO();
         unidadeFederativaCOL = new UnidadeFederativaCOL();
     }
 
@@ -18,14 +15,14 @@ public class CidadeCOL {
     }
 
     public boolean validarNome(String nome){
-        return nome != null && !nome.trim().isEmpty();
+        return nome != null && !nome.isBlank();
     }
 
-    public boolean validarUnidadeFederativaCidade(UnidadeFederativa unidadeFederativa) throws Exception {
-        return  unidadeFederativaCOL.validarUnidadeFederativa(unidadeFederativa) && unidadeFederativaCOL.validarUnidadeFederativaExiste(unidadeFederativa);
+    public boolean validarUnidadeFederativaCidade(UnidadeFederativa unidadeFederativa) {
+        return  unidadeFederativaCOL.validarUnidadeFederativa(unidadeFederativa);
     }
 
-    public boolean validarCidade(Cidade cidade) throws Exception{
+    public boolean validarCidade(Cidade cidade) {
         if(cidade == null){
             return false;
         }
@@ -35,13 +32,5 @@ public class CidadeCOL {
         return validarID(cidade.getId()) &&
                 validarNome(cidade.getNome()) &&
                 validarUnidadeFederativaCidade(unidadeFederativa);
-    }
-
-    public boolean validarCidadeExiste(Cidade cidade) throws Exception{
-        if(!validarCidade(cidade)){
-            return false;
-        }
-
-        return cidadeDAO.obterCidadePorID(cidade.getId()) != null;
     }
 }

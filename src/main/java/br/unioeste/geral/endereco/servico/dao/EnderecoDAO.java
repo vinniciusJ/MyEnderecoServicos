@@ -4,6 +4,7 @@ import br.unioeste.apoio.bd.ConexaoBD;
 import br.unioeste.geral.endereco.bo.bairro.Bairro;
 import br.unioeste.geral.endereco.bo.cidade.Cidade;
 import br.unioeste.geral.endereco.bo.endereco.Endereco;
+import br.unioeste.geral.endereco.bo.enderecoespecifico.EnderecoEspecifico;
 import br.unioeste.geral.endereco.bo.logradouro.Logradouro;
 import br.unioeste.geral.endereco.servico.exception.EnderecoException;
 
@@ -15,51 +16,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EnderecoDAO {
-    private final ConexaoBD conexaoBD;
+    private final Connection conexao;
+
     private final BairroDAO bairroDAO;
     private final CidadeDAO cidadeDAO;
     private final LogradouroDAO logradouroDAO;
 
-    public EnderecoDAO() {
-        conexaoBD = new ConexaoBD();
+    public EnderecoDAO(Connection conexao) {
+        this.conexao = conexao;
 
-        bairroDAO = new BairroDAO();
-        cidadeDAO = new CidadeDAO();
-        logradouroDAO = new LogradouroDAO();
+        this.bairroDAO = new BairroDAO(conexao);
+        this.cidadeDAO = new CidadeDAO(conexao);
+        this.logradouroDAO = new LogradouroDAO(conexao);
     }
 
     public Endereco obterEnderecoPorID(Long id) throws Exception {
         String sql = "SELECT * FROM endereco WHERE id = ?";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         Endereco endereco = null;
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setLong(1, id);
 
-            resultSet = stmt.executeQuery();
-
-            if(resultSet.next()){
-                endereco = criarEnderecoBO(resultSet);
+            try(ResultSet resultSet = stmt.executeQuery()){
+                if (resultSet.next()){
+                    endereco = criarEnderecoBO(resultSet);
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível encontrar o endereço com a ID: " + id);
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter o endereco com ID " + id);
         }
 
         return endereco;
@@ -69,33 +55,17 @@ public class EnderecoDAO {
     public List<Endereco> obterEnderecos() throws Exception{
         String sql = "SELECT * FROM endereco";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         List<Endereco> enderecos = new ArrayList<>();
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
-            resultSet = stmt.executeQuery();
-
-            while (resultSet.next()){
-                enderecos.add(criarEnderecoBO(resultSet));
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    enderecos.add(criarEnderecoBO(resultSet));
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível buscar todos os endereços ");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter todos os endereços");
         }
 
         return enderecos;
@@ -104,85 +74,50 @@ public class EnderecoDAO {
     public List<Endereco> obterEnderecosPorCEP(String cep) throws Exception{
         String sql = "SELECT * FROM endereco WHERE cep = ?";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         List<Endereco> enderecos = new ArrayList<>();
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setString(1, cep);
 
-            resultSet = stmt.executeQuery();
-
-            while (resultSet.next()){
-                enderecos.add(criarEnderecoBO(resultSet));
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    enderecos.add(criarEnderecoBO(resultSet));
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível buscar todos os endereços ");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter todos os endereços com CEP " + cep);
         }
 
         return enderecos;
     }
 
-    public Endereco inserirEndereco(Endereco endereco) throws Exception {
+    public Long inserirEndereco(Endereco endereco) throws Exception {
         String sql = "INSERT INTO endereco (cep, id_logradouro, id_bairro, id_cidade) VALUES (?, ?, ?, ?)";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setString(1, endereco.getCep());
             stmt.setLong(2, endereco.getLogradouro().getId());
             stmt.setLong(3, endereco.getBairro().getId());
             stmt.setLong(4, endereco.getCidade().getId());
 
-            stmt.executeUpdate();
+            int resultado = stmt.executeUpdate();
 
-            resultSet = stmt.getGeneratedKeys();
-
-            if(resultSet.next()){
-                endereco.setId(resultSet.getLong(1));
-            }
-            else {
+            if(resultado == 0){
                 throw new EnderecoException("Não foi possível cadastrar o endereço");
             }
 
-            conexao.commit();
-        }
-        catch(SQLException e){
-            if(conexao != null){
-                conexao.rollback();
+            try(ResultSet resultSet = stmt.getGeneratedKeys()) {
+                if(resultSet.next()){
+                    endereco.setId(resultSet.getLong(1));
+                }
             }
-
-            throw new EnderecoException("Não foi possível buscar todos os endereços ");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
         }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível cadastrar o endereço");
         }
 
-        return endereco;
+        return endereco.getId();
     }
 
     private Endereco criarEnderecoBO(ResultSet resultSet) throws Exception {

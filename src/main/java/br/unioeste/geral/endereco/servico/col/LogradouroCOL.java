@@ -5,11 +5,9 @@ import br.unioeste.geral.endereco.bo.tipologradouro.TipoLogradouro;
 import br.unioeste.geral.endereco.servico.dao.LogradouroDAO;
 
 public class LogradouroCOL {
-    private final LogradouroDAO logradouroDAO;
     private final TipoLogradouroCOL tipoLogradouroCOL;
 
     public LogradouroCOL() {
-        logradouroDAO = new LogradouroDAO();
         tipoLogradouroCOL = new TipoLogradouroCOL();
     }
 
@@ -18,10 +16,10 @@ public class LogradouroCOL {
     }
 
     public boolean validarNome(String nome){
-        return nome != null && !nome.trim().isEmpty();
+        return nome != null && !nome.isBlank();
     }
 
-    public boolean validarLogradouro(Logradouro logradouro) throws Exception{
+    public boolean validarLogradouro(Logradouro logradouro){
         if(logradouro == null){
             return false;
         }
@@ -30,15 +28,6 @@ public class LogradouroCOL {
 
         return validarID(logradouro.getId()) &&
                 validarNome(logradouro.getNome()) &&
-                tipoLogradouroCOL.validarTipoLogradouro(tipoLogradouro) &&
-                tipoLogradouroCOL.validarTipoLogradouroExiste(tipoLogradouro);
-    }
-
-    public boolean validarLogradouroExiste(Logradouro logradouro) throws Exception{
-        if(!validarLogradouro(logradouro)){
-            return false;
-        }
-
-        return logradouroDAO.obterLogradouroPorId(logradouro.getId()) != null;
+                tipoLogradouroCOL.validarTipoLogradouro(tipoLogradouro);
     }
 }

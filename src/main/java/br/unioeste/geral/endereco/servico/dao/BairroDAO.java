@@ -1,55 +1,37 @@
 package br.unioeste.geral.endereco.servico.dao;
 
-import br.unioeste.apoio.bd.ConexaoBD;
 import br.unioeste.geral.endereco.bo.bairro.Bairro;
 import br.unioeste.geral.endereco.servico.exception.EnderecoException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BairroDAO {
-    private final ConexaoBD conexaoBD;
+    private final Connection conexao;
 
-    public BairroDAO() {
-        conexaoBD = new ConexaoBD();
+    public BairroDAO(Connection conexao) {
+        this.conexao = conexao;
     }
 
     public Bairro obterBairroPorID(Long id) throws Exception {
         String sql = "SELECT * FROM bairro WHERE id = ?";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         Bairro bairro = null;
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setLong(1, id);
 
-            resultSet = stmt.executeQuery();
-
-            if(resultSet.next()){
-                bairro = criarBairroBO(resultSet);
+            try(ResultSet resultSet = stmt.executeQuery()){
+                if (resultSet.next()){
+                    bairro = criarBairroBO(resultSet);
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível encontrar o bairro com a ID: " + id);
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter o bairro com ID " + id);
         }
 
         return bairro;
@@ -58,30 +40,17 @@ public class BairroDAO {
     public List<Bairro> obterBairros() throws Exception{
         String sql = "SELECT * FROM bairro";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         List<Bairro> bairros = new ArrayList<>();
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
-            resultSet = stmt.executeQuery();
-
-            while (resultSet.next()){
-                bairros.add(criarBairroBO(resultSet));
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    bairros.add(criarBairroBO(resultSet));
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível buscar todos os bairros");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter todos os bairros");
         }
 
         return bairros;

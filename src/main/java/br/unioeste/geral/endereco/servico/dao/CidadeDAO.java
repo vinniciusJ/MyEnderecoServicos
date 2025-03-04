@@ -14,46 +14,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CidadeDAO {
-    private final ConexaoBD conexaoBD;
+    private final Connection conexao;
     private final UnidadeFederativaDAO unidadeFederativaDAO;
 
-    public CidadeDAO() {
-        conexaoBD = new ConexaoBD();
-        unidadeFederativaDAO = new UnidadeFederativaDAO();
+    public CidadeDAO(Connection conexao) {
+        this.conexao = conexao;
+        this.unidadeFederativaDAO = new UnidadeFederativaDAO(conexao);
     }
 
     public Cidade obterCidadePorID(Long id) throws Exception {
         String sql = "SELECT * FROM cidade WHERE id = ?";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         Cidade cidade = null;
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
             stmt.setLong(1, id);
 
-            resultSet = stmt.executeQuery();
-
-            if(resultSet.next()){
-                return criarCidadeBO(resultSet);
+            try(ResultSet resultSet = stmt.executeQuery()){
+                if (resultSet.next()){
+                    cidade = criarCidadeBO(resultSet);
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível encontrar a cidade com o ID: " + id);
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
-        }
-        finally {
-            conexaoBD.encerrarConexoes(resultSet, stmt, conexao);
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter a cidade com ID " + id);
         }
 
         return cidade;
@@ -62,30 +46,17 @@ public class CidadeDAO {
     public List<Cidade> obterCidades() throws Exception{
         String sql = "SELECT * FROM cidade";
 
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet resultSet = null;
-
         List<Cidade> cidades = new ArrayList<>();
 
-        try{
-            conexao = conexaoBD.getConexaoBD();
-            stmt = conexao.prepareStatement(sql);
-
-            conexao.setAutoCommit(false);
-
-            resultSet = stmt.executeQuery();
-
-            while (resultSet.next()){
-                cidades.add(criarCidadeBO(resultSet));
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    cidades.add(criarCidadeBO(resultSet));
+                }
             }
-
-            conexao.commit();
         }
-        catch(SQLException e){
-            throw new EnderecoException("Não foi possível buscar todas as cidades");
-        } catch (Exception e) {
-            throw new RuntimeException("Não foi possível estabelecer conexão com o banco de dados");
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter todos as cidades");
         }
 
         return cidades;
