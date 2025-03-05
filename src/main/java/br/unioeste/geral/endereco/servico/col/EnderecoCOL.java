@@ -51,4 +51,19 @@ public class EnderecoCOL {
                 validarLogradouroEndereco(logradouro) &&
                 validarCidadeEndereco(cidade);
     }
+
+    public boolean validarEnderecoForm(Endereco endereco){
+        if(endereco == null){
+            return false;
+        }
+
+        Cidade cidade = endereco.getCidade();
+        Bairro bairro = endereco.getBairro();
+        Logradouro logradouro = endereco.getLogradouro();
+
+        return validarCEP(endereco.getCep()) &&
+                validarID(cidade.getId()) &&
+                validarID(bairro.getId()) &&
+                validarID(logradouro.getId());
+    }
 }

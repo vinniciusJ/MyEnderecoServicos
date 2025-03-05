@@ -122,7 +122,7 @@ public class UCEnderecoServicos {
     }
 
     public Endereco cadastrarEndereco(Endereco endereco) throws Exception{
-        if(!enderecoCOL.validarEndereco(endereco)){
+        if(!enderecoCOL.validarEnderecoForm(endereco)){
             throw new EnderecoException("Endereço inválido");
         }
 
