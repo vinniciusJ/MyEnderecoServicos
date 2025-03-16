@@ -43,6 +43,27 @@ public class CidadeDAO {
         return cidade;
     }
 
+    public List<Cidade> obterCidadesPorNome(String nome) throws Exception {
+        String sql = "SELECT * FROM cidade WHERE nome LIKE %?%";
+
+        List<Cidade> cidades = new ArrayList<>();
+
+        try(PreparedStatement stmt = conexao.prepareStatement(sql)){
+            stmt.setString(1, nome);
+
+            try(ResultSet resultSet = stmt.executeQuery()){
+                while (resultSet.next()){
+                    cidades.add(criarCidadeBO(resultSet));
+                }
+            }
+        }
+        catch (Exception e){
+            throw new EnderecoException("Não foi possível obter a cidades com nome " + nome);
+        }
+
+        return cidades;
+    }
+
     public List<Cidade> obterCidades() throws Exception{
         String sql = "SELECT * FROM cidade";
 

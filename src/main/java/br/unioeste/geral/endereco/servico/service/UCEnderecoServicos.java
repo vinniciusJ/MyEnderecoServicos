@@ -197,6 +197,26 @@ public class UCEnderecoServicos {
         return cidades;
     }
 
+    public List<Cidade> obterCidadesPorNome(String nome) throws Exception{
+        List<Cidade> cidades = new ArrayList<>();
+
+        try(Connection conexao = conexaoBD.getConexaoBD()){
+            CidadeDAO cidadeDAO = new CidadeDAO(conexao);
+
+            conexao.setAutoCommit(false);
+
+            try {
+                cidades = cidadeDAO.obterCidadesPorNome(nome);
+                conexao.commit();
+            }
+            catch(Exception e){
+                gerenciarException(e);
+            }
+        }
+
+        return cidades;
+    }
+
     public List<Logradouro> obterLogradouros() throws Exception {
         List<Logradouro> logradouros = new ArrayList<>();
 
