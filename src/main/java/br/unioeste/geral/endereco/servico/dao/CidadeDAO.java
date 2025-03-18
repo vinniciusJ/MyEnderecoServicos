@@ -44,12 +44,12 @@ public class CidadeDAO {
     }
 
     public List<Cidade> obterCidadesPorNome(String nome) throws Exception {
-        String sql = "SELECT * FROM cidade WHERE nome LIKE %?%";
+        String sql = "SELECT * FROM cidade WHERE nome LIKE ?";
 
         List<Cidade> cidades = new ArrayList<>();
 
         try(PreparedStatement stmt = conexao.prepareStatement(sql)){
-            stmt.setString(1, nome);
+            stmt.setString(1, "%" + nome + "%");
 
             try(ResultSet resultSet = stmt.executeQuery()){
                 while (resultSet.next()){
